@@ -17,14 +17,23 @@ def cartpole_dynamics(state, action):
        返回: [x_dot, x_ddot, theta_dot, theta_ddot]
        """
     x, x_dot, theta, theta_dot = state
-    F = action
+    F = float(action)
 
-    # TODO: 这里明天填公式
-    # 先随便返回0，保证函数能跑
-    x_ddot = 0.0
-    theta_ddot = 0.0
+    cos_t = np.cos(theta)
+    sin_t = np.sin(theta)
 
-    return np.array([x_dot, x_ddot, theta_dot, theta_ddot])
+    # 临时变量
+    temp = (F + m * l * theta_dot**2 * sin_t) / (M + m)
+
+    # 摆杆角加速度
+    theta_ddot = (g * sin_t - cos_t * temp) / (
+        l * (4.0 / 3.0 - m *cos_t**2 / (M + m))
+    )
+
+    # 小车线加速度
+    x_ddot = temp - (m * l * theta_ddot * cos_t) / (M + m)
+
+    return np.array([x_dot, x_ddot, theta_dot, theta_ddot], dtype=float)
 
 def step(state, action, dt = 0.02):
     """
