@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from dynamics import step
+from controller import lqr_controller
 
 # 初始状态: 小车在中间 摆杆往右边偏移0.1弧度
 state = np.array([0.0, 0.0, 0.1, 0.0])
@@ -13,28 +14,39 @@ steps = int(total_time / dt)
 
 # 记录数据
 history = [state.copy()]
+actions = [0.0]
 
-# 主循环: 不给控制，摆杆自由落下
+# LQR 闭环控制
 for i in range(steps):
-    action = 0.0        # 不加力
+    action = lqr_controller(state)      # 施加力
     state = step(state, action, dt)
     history.append(state.copy())
+    actions.append(action)
 
+actions = np.array(actions)
 history = np.array(history)
 time = np.arange(len(history)) * dt     # 时间序列
 
-# 画图
-plt.figure(figsize=(10, 4))
-plt.plot(time, history[:, 2], label='theta(rad)')       #第三列是角度
-plt.axhline(y=0, color='r', linestyle='--', label='upright')
-plt.xlabel('Time(s)')
-plt.ylabel('Angle(rad)')
-plt.title('CartPole Free Fall (no control)')
-plt.legend()
-plt.grid(True)
-plt.savefig('results/free_fall.png', dpi=150)
+# 画图：角度 + 控制力
+fig, axes = plt.subplots(2, 1, figsize=(10, 6), sharex=True)
+
+# 图1：摆杆角度
+axes[0].plot(time, history[:, 2], label='theta (rad)', color='blue')
+axes[0].axhline(y=0, color='r', linestyle='--', label='upright')
+axes[0].set_ylabel('Angle (rad)')
+axes[0].set_title('CartPole with LQR Control')
+axes[0].legend()
+axes[0].grid(True)
+
+# 图2：控制力
+axes[1].plot(time, actions, label='Force (N)', color='green')
+axes[1].set_xlabel('Time (s)')
+axes[1].set_ylabel('Force (N)')
+axes[1].legend()
+axes[1].grid(True)
+
+plt.tight_layout()
+plt.savefig('results/lqr_control.png', dpi=150)
 plt.show()
 
-print("图片已经保存到 result/free_fall.png")
-print(f"仿真完成，共{len(history)}步")
-print(f"最终状态：{history[-1]}")
+print("图已保存到 results/lqr_control.png")
